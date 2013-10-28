@@ -86,6 +86,9 @@ define(["./_base/kernel", "require", "./has", "./_base/array", "./_base/config",
 		doLoad = function(require, bundlePathAndName, bundlePath, bundleName, locale, load){
 			// summary:
 			//		get the root bundle which instructs which other bundles are required to construct the localized bundle
+			if(cache[bundlePathAndName]){
+				define(bundlePathAndName, cache[bundlePathAndName]);
+			}
 			require([bundlePathAndName], function(root){
 				var current = lang.clone(root.root || root.ROOT),// 1.6 built bundle defined ROOT
 					availableLocales = getAvailableLocales(!root._v1x && root, locale, bundlePath, bundleName);
@@ -113,7 +116,6 @@ define(["./_base/kernel", "require", "./has", "./_base/array", "./_base/config",
 		getLocalesToLoad = function(targetLocale){
 			var list = config.extraLocale || [];
 			list = lang.isArray(list) ? list : [list];
-			list = array.map(list, getMatchedLocale);
 			list.push(targetLocale);
 			return list;
 		},
@@ -317,7 +319,7 @@ define(["./_base/kernel", "require", "./has", "./_base/array", "./_base/config",
 				//		in that the v1.6- would only load ab-cd...which was *always* flattened.
 				//
 				//		If guaranteedAmdFormat is true, then the module can be loaded with require thereby circumventing the detection algorithm
-				//		and the extra possible extra transaction.
+				//		and the possible extra transaction.
 
 				// If this function is called from legacy code, then guaranteedAmdFormat and contextRequire will be undefined. Since the function
 				// needs a require in order to resolve module ids, fall back to the context-require associated with this dojo/i18n module, which
@@ -352,7 +354,13 @@ define(["./_base/kernel", "require", "./has", "./_base/array", "./_base/config",
 							preloading++;
 							doRequire(mid, function(rollup){
 								for(var p in rollup){
-									cache[require.toAbsMid(p) + "/" + loc] = rollup[p];
+									var bundle = cache[require.toAbsMid(p) + "/" + loc] = rollup[p];
+									if(loc==="ROOT"){
+										var root = bundle._localized;
+										delete bundle._localized
+										root.root = bundle;
+										cache[require.toAbsMid(p)] = root;
+									}
 								}
 								--preloading;
 								while(!preloading && preloadWaitQueue.length){

@@ -350,6 +350,12 @@ number._parseInfo = function(/*Object?*/ options){
 		re = re.replace(/([\s\xa0]*)(\u00a4{1,3})([\s\xa0]*)/g, function(match, before, target, after){
 			var prop = ["symbol", "currency", "displayName"][target.length-1],
 				symbol = dregexp.escapeString(options[prop] || options.currency || "");
+
+			// if there is no symbol there is no need to take white-spaces into account.
+			if(!symbol){
+				return "";
+			}
+
 			before = before ? "[\\s\\xa0]" : "";
 			after = after ? "[\\s\\xa0]" : "";
 			if(!options.strict){

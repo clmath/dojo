@@ -8,7 +8,7 @@ define([
 	var defaultLocale = 'en-us';
 
 	function assertStrictNaN(value) {
-		// reliable test for NaN (not subject to coersion)
+		// reliable test for NaN (not subject to coercion)
 		assert.notStrictEqual(value, value);
 	}
 
@@ -36,34 +36,25 @@ define([
 
 	function checkFormatParseCycle(options, sourceInput, expected, backwardCheck) {
 		// backwardCheck is a boolean indicating whether test needs a roundtrip, e.g. format->parse->format
-		if (options == null) {
-			var pattern = options.pattern;
-			var locale = options.locale;
-			//TODO: add more fields
-		}
-
-		var str = pattern == null ? 'default' : pattern;
 		var result = number.format(sourceInput, options);
-		if (expected == null) {
-		    assert.strictEqual(result, expected);
+		if (isStrictNaN(expected)) {
+			assertStrictNaN(result);
+		} else {
+			assert.strictEqual(result, expected);
 		}
 		if (backwardCheck) {
 			var resultParsed = number.parse(result,options);
 			if (!decimalNumberDiff(resultParsed, sourceInput)) {
-			    assert.strictEqual(resultParsed, sourceInput);
+				assert.strictEqual(resultParsed, sourceInput);
 			}
 			var resultParsedReformatted = number.format(resultParsed, options);
-		    if (!decimalNumberDiff(result, resultParsedReformatted)) {
+			if (!decimalNumberDiff(result, resultParsedReformatted)) {
 				assert.strictEqual(resultParsedReformatted, result);
 			}
 		}
 	}
 
 	function checkParse(options, sourceInput, expected) {
-		var str = 'default';
-		if (options && options.pattern != null) {
-			str = options.pattern;
-		}
 		//print('input:' + sourceInput);
 		var result = number.parse(sourceInput, options);
 		//print('result :' + result);
@@ -174,7 +165,7 @@ define([
 
 				assert.strictEqual(number.round(-12346 + 0.49999), -12346, 'rsux215');
 				assert.strictEqual(number.round(-12346 + 0.5), -12346, 'rsux216');
-				assert.strictEqual(number.round(-12346 + 0.50001   ), -12345, 'rsux217');
+				assert.strictEqual(number.round(-12346 + 0.50001), -12345, 'rsux217');
 
 				assert.strictEqual(number.round(-12345 + 0.4), -12345, 'rsux220');
 				assert.strictEqual(number.round(-12345 + 0.49), -12345, 'rsux221');
@@ -187,11 +178,11 @@ define([
 				assert.strictEqual(number.round(-12345 + 0.51), -12344, 'rsux228');
 				assert.strictEqual(number.round(-12345 + 0.6), -12344, 'rsux229');
 
-				assert.strictEqual(number.round(12345 /  1), 12345, 'rdvx401');
-				assert.strictEqual(number.round(12345 /  1.0001), 12344, 'rdvx402');
-				assert.strictEqual(number.round(12345 /  1.001), 12333, 'rdvx403');
-				assert.strictEqual(number.round(12345 /  1.01), 12223, 'rdvx404');
-				assert.strictEqual(number.round(12345 /  1.1), 11223, 'rdvx405');
+				assert.strictEqual(number.round(12345 / 1), 12345, 'rdvx401');
+				assert.strictEqual(number.round(12345 / 1.0001), 12344, 'rdvx402');
+				assert.strictEqual(number.round(12345 / 1.001), 12333, 'rdvx403');
+				assert.strictEqual(number.round(12345 / 1.01), 12223, 'rdvx404');
+				assert.strictEqual(number.round(12345 / 1.1), 11223, 'rdvx405');
 
 				assert.strictEqual(number.round(12355 / 4, 1), 3088.8, 'rdvx406');
 				assert.strictEqual(number.round(12345 / 4, 1), 3086.3, 'rdvx407');
@@ -329,9 +320,6 @@ define([
 				// should allow unlimited precision, by default
 				assert.strictEqual(number.parse('1.23456789', {locale: 'en-us'}), 1.23456789);
 
-				// test whitespace
-				// assert.strictEqual(-1234567, number.parse('  -1,234,567  ', {locale: 'en-us'}));
-
 				// assert.ok(number.parse('9.1093826E-31'));
 				assert.strictEqual(number.parse('123%', {locale: 'en-us', type: 'percent'}), 1.23);
 				assert.strictEqual(number.parse('123%', {places:0, locale: 'en-us', type: 'percent'}), 1.23);
@@ -387,10 +375,10 @@ define([
 			// NumberRegression.Test4088503, NumberRegression.Test4106658
 			checkFormatParseCycle({ places: 0 }, 123, '123', false);
 
-			// TODO: differernt from ICU where -0.0 is formatted to '-0'
+			// TODO: different from ICU where -0.0 is formatted to '-0'
 			checkFormatParseCycle({ locale: 'en-us' }, -0.0, '0', false);
 
-			// TODO: differernt from ICU where -0.0001 is formatted to '-0'
+			// TODO: different from ICU where -0.0001 is formatted to '-0'
 			checkFormatParseCycle({ locale: 'en-us', places: 6 }, -0.0001, '-0.000100', false);
 
 
@@ -442,9 +430,9 @@ define([
 			checkFormatParseCycle({ pattern: '+000.00%;-000.00%', locale: 'en-us' }, 0.1234, '+012.34%', false);
 			checkFormatParseCycle({ pattern: '##,###,###.00', locale: 'en-us'}, 9.02, '9.02', false);
 
-			var patterns = ([ '#.00', '0.00', '00.00', '#0.0#', '#0.00' ]);
-			var expected = ([ '1.20', '1.20', '01.20', '1.2', '1.20' ]);
-			for (var i = 0; i < patterns.length; i++){
+			patterns = ([ '#.00', '0.00', '00.00', '#0.0#', '#0.00' ]);
+			expected = ([ '1.20', '1.20', '01.20', '1.2', '1.20' ]);
+			for (i = 0; i < patterns.length; i++){
 				checkFormatParseCycle({ pattern: patterns[i], locale: 'en-us' }, 1.2, expected[i], false);
 			}
 		}

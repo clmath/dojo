@@ -12,6 +12,12 @@ define([
 		assert.notStrictEqual(value, value);
 	}
 
+	function isStrictNaN(value) {
+		// reliable test for NaN (not subject to coercion)
+		// isNaN(undefined) return true in Chrome 40
+		return value !== value;
+	}
+
 	function decimalNumberDiff(num1, num2) {
 		//TODO: should be more accurate when dojo/number finish rounding in the future
 		var diffBound = 1e-3;
@@ -61,8 +67,10 @@ define([
 		//print('input:' + sourceInput);
 		var result = number.parse(sourceInput, options);
 		//print('result :' + result);
-		if (expected != null){
-		    assert.strictEqual(result, expected);
+		if (isStrictNaN(expected)) {
+			assertStrictNaN(result);
+		} else {
+			assert.strictEqual(result, expected);
 		}
 	}
 
@@ -343,6 +351,15 @@ define([
 				assert.strictEqual(number.parse('123.4', {places:1, locale: 'en-us'}), 123.4);
 				assert.strictEqual(number.parse('123.45', {places:'1,3', locale: 'en-us'}), 123.45);
 				assert.strictEqual(number.parse('123.45', {places:'0,2', locale: 'en-us'}), 123.45);
+			},
+			't18466': function () {
+				var locale = "fr";
+				checkParse({ pattern: "#,###.00 ¤;(#,###.00) ¤", locale: locale }, "1,00 ", NaN);
+				checkParse({ pattern: "#,###.00 ¤;(#,###.00) ¤", locale: locale }, "1,00", 1);
+				checkParse({ pattern: "#,###.00¤;(#,###.00)¤", locale: locale }, "1,00 ", NaN);
+				checkParse({ pattern: "#,###.00¤;(#,###.00)¤", locale: locale }, "1,00", 1);
+				checkParse({ pattern: "#,###.00¤;(#,###.00) ¤", locale: locale }, "1 000,00 ", NaN);
+				checkParse({ pattern: "#,###.00¤;(#,###.00) ¤", locale: locale }, "1 000,00", 1000);
 			}
 		},
 
@@ -410,14 +427,14 @@ define([
 
 
 			// NumberRegression.Test4052223
-			checkParse({ pattern: '#,#00.00' }, 'abc3');
+			checkParse({ pattern: '#,#00.00' }, 'abc3', NaN);
 
 			//TODO: got NaN instead of 1.222, is it ok?
 			//checkParse({pattern:'#,##0.###',locale:'en-us'},'1.222,111',1.222);
 			//checkParse({pattern:'#,##0.###',locale:'en-us'},'1.222x111',1.222);
 
 			//got NaN for illegal input, ok
-			checkParse(null,'hello: ,.#$@^&**10x');
+			checkParse(null,'hello: ,.#$@^&**10x', NaN);
 
 
 			// NumberRegression.Test4125885
